@@ -1,0 +1,5 @@
+pattern,doc_type,specialty,splitter,note
+саммари|выписк,,,dated_headers,Много визитов в одном файле; вид и автор — из строки визита
+транскрипт|интервью|беседа,interview_transcript,,lines,Беседа — один источник; сведения по умолчанию сообщены пациентом
+первичн.*при[её]м|осмотр психиатра,psychiatric_exam,psychiatrist,paragraphs,
+\.(xlsx|csv)$,questionnaire,,table,

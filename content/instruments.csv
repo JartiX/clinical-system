@@ -1,0 +1,4 @@
+code,name,answer_scale,scoring,item_count,loinc_total,note
+PHQ9,PHQ-9,frequency_2w,sum,9,44261-6,Стандартный ключ: 0–3 за пункт
+GAD7,GAD-7,frequency_2w,sum,7,70274-6,Стандартный ключ: 0–3 за пункт
+PRIMARY,Первичная оценка,intensity_4,sum,119,,Ключ подсчёта ожидается от медиков; пока баллы ответов не заданы
