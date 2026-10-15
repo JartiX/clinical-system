@@ -1,0 +1,71 @@
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix cs:   <https://clinical-system.local/ns#> .
+
+# Проверки целостности графа пациента (М1). Значения статусов и видов проверяются
+# через принадлежность классу справочника: код, которого нет в vocabulary,
+# не получает типа и даёт нарушение.
+
+cs:FactShape a sh:NodeShape ;
+    sh:targetClass cs:Fact ;
+    sh:property [
+        sh:path cs:hasSource ; sh:minCount 1 ; sh:class cs:FactSource ;
+        sh:message "У факта нет источника (цитаты)" ] ;
+    sh:property [
+        sh:path cs:epistemicStatus ; sh:minCount 1 ; sh:maxCount 1 ; sh:class cs:EpistemicStatus ;
+        sh:message "У факта нет эпистемического статуса или он не из справочника" ] ;
+    sh:property [
+        sh:path cs:confirmationStatus ; sh:minCount 1 ; sh:maxCount 1 ; sh:class cs:ConfirmationStatus ;
+        sh:message "У факта нет статуса подтверждения или он не из справочника" ] ;
+    sh:property [
+        sh:path cs:factType ; sh:minCount 1 ; sh:maxCount 1 ; sh:class cs:FactType ;
+        sh:message "Тип факта не из справочника" ] ;
+    sh:property [
+        sh:path cs:dataClass ; sh:minCount 1 ; sh:maxCount 1 ; sh:class cs:DataClass ;
+        sh:message "У факта нет класса данных" ] ;
+    sh:property [
+        sh:path cs:patient ; sh:minCount 1 ; sh:maxCount 1 ; sh:class cs:Patient ;
+        sh:message "Факт не привязан к пациенту" ] ;
+    sh:property [
+        sh:path prov:wasGeneratedBy ; sh:minCount 1 ;
+        sh:message "Не указано, каким действием получен факт" ] .
+
+cs:FactSourceShape a sh:NodeShape ;
+    sh:targetClass cs:FactSource ;
+    sh:property [
+        sh:path cs:fragment ; sh:minCount 1 ; sh:maxCount 1 ; sh:class cs:Fragment ;
+        sh:message "Источник факта не указывает на фрагмент" ] ;
+    sh:property [ sh:path cs:quoteStart ; sh:minCount 1 ; sh:datatype xsd:integer ] ;
+    sh:property [ sh:path cs:quoteEnd ; sh:minCount 1 ; sh:datatype xsd:integer ] .
+
+cs:DocumentShape a sh:NodeShape ;
+    sh:targetClass cs:Document ;
+    sh:property [
+        sh:path cs:patient ; sh:minCount 1 ; sh:maxCount 1 ; sh:class cs:Patient ;
+        sh:message "Документ не привязан к пациенту" ] ;
+    sh:property [
+        sh:path cs:docType ; sh:minCount 1 ; sh:maxCount 1 ; sh:class cs:DocumentType ;
+        sh:message "Вид документа не из справочника" ] ;
+    sh:property [
+        sh:path cs:dataClass ; sh:minCount 1 ; sh:maxCount 1 ; sh:class cs:DataClass ;
+        sh:message "У документа нет класса данных" ] ;
+    sh:property [
+        sh:path prov:wasDerivedFrom ; sh:minCount 1 ; sh:class cs:SourceFile ;
+        sh:message "Документ не связан с исходным файлом" ] ;
+    sh:or (
+        [ sh:path cs:docDate ; sh:minCount 1 ]
+        [ sh:path cs:needsReview ; sh:hasValue true ]
+    ) ;
+    sh:message "У документа нет даты, и он не помечен на проверку" .
+
+cs:FragmentShape a sh:NodeShape ;
+    sh:targetClass cs:Fragment ;
+    sh:property [
+        sh:path cs:document ; sh:minCount 1 ; sh:maxCount 1 ; sh:class cs:Document ;
+        sh:message "Фрагмент не привязан к документу" ] ;
+    sh:property [
+        sh:path cs:kind ; sh:minCount 1 ; sh:class cs:FragmentKind ;
+        sh:message "Вид фрагмента не из справочника" ] ;
+    sh:property [ sh:path cs:startOffset ; sh:minCount 1 ; sh:datatype xsd:integer ] ;
+    sh:property [ sh:path cs:endOffset ; sh:minCount 1 ; sh:datatype xsd:integer ] .

@@ -1,0 +1,9 @@
+scale,label,score
+frequency_2w,Совсем не беспокоили,0
+frequency_2w,Несколько дней,1
+frequency_2w,Более половины всех дней,2
+frequency_2w,Почти каждый день,3
+intensity_4,Совсем нет,
+intensity_4,Немного,
+intensity_4,Умеренно,
+intensity_4,Сильно,

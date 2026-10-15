@@ -1,0 +1,12 @@
+pattern,doc_type,specialty,note
+^гинеколог$,specialist_consultation,gynecologist,
+^невролог$,specialist_consultation,neurologist,
+^ревматолог$,specialist_consultation,rheumatologist,
+^уролог$,specialist_consultation,urologist,
+^сосудистый хирург$,specialist_consultation,vascular_surgeon,
+^эндокринолог$,specialist_consultation,endocrinologist,
+^психиатр$,psychiatric_exam,psychiatrist,
+^дневной стац,day_hospital,,
+^направление,referral,,
+^приемный покой уролог$,emergency_visit,urologist,
+^приемный покой$,emergency_visit,,
