@@ -1,6 +1,7 @@
 import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
 import "dayjs/locale/ru";
+import { sha256Bytes } from "./sha256";
 
 // без плагина DateInput не разбирает дату, введённую с клавиатуры («20.10.2025»)
 dayjs.extend(customParseFormat);
@@ -28,7 +29,10 @@ export const dataClassLabel = (code: string) => DATA_CLASS_OPTIONS.find((o) => o
 
 /** SHA-256 содержимого файла в hex — чтобы заранее узнать, загружался ли уже такой файл. */
 export async function sha256(file: File): Promise<string> {
-  const digest = await crypto.subtle.digest("SHA-256", await file.arrayBuffer());
+  const data = await file.arrayBuffer();
+  // crypto.subtle есть только по HTTPS и на localhost; по обычному HTTP считаем сами
+  if (!globalThis.crypto?.subtle) return sha256Bytes(new Uint8Array(data));
+  const digest = await crypto.subtle.digest("SHA-256", data);
   return Array.from(new Uint8Array(digest), (b) => b.toString(16).padStart(2, "0")).join("");
 }
 

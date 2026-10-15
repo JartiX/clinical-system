@@ -88,7 +88,7 @@ export const previewTableNames = (files: File[]) => {
   return http.postForm<{ tables: TableNames[] }>("/api/tables/names", form);
 };
 
-export const checkFiles =(code: string, files: { name: string; sha256: string }[]) =>
+export const checkFiles = (code: string, files: { name: string; sha256: string }[]) =>
   http.post<{ conflicts: NameConflict[] }>(`/api/patients/${enc(code)}/files/check`, { files });
 
 export function useUploadFiles() {
