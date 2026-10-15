@@ -13,15 +13,19 @@ import {
 } from "@mantine/core";
 import { Dropzone } from "@mantine/dropzone";
 import { IconAlertTriangle, IconFile, IconUpload, IconX } from "@tabler/icons-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { checkFiles, usePatients, useUploadFiles } from "../../api/queries";
-import type { NameConflict, UploadResult } from "../../api/types";
-import { DATA_CLASS_OPTIONS, formatDateTime, sha256 } from "../../lib/format";
+import { checkFiles, previewTableNames, usePatients, useUploadFiles } from "../../api/queries";
+import type { NameConflict, TableNames, UploadResult } from "../../api/types";
+import { DATA_CLASS_OPTIONS, formatDateTime, nameKey, sha256 } from "../../lib/format";
 import { useIsMobile } from "../../lib/useIsMobile";
+import { AliasPicker, mergeNames } from "./AliasPicker";
 import { IngestReportView } from "./IngestReportView";
 
 type Choice = "version" | "separate";
+
+// Заранее читаем имена только из файлов, похожих на таблицы; вид файла окончательно определяет сервер.
+const looksLikeTable = (f: File) => /\.(xlsx|xls|csv)$/i.test(f.name);
 
 interface Props {
   initialCode: string;
@@ -36,11 +40,45 @@ export function UploadModal({ initialCode, onClose }: Props) {
   const { data: patients } = usePatients();
   const [code, setCode] = useState(initialCode);
   const [dataClass, setDataClass] = useState("synthetic");
-  const [aliases, setAliases] = useState("");
+  const [aliases, setAliases] = useState<string[]>([]);
   // у существующего пациента класс данных и имена берутся из хранилища
   const existing = patients?.find((p) => p.code === code.trim());
   const effectiveClass = existing?.data_class ?? dataClass;
+  const knownAliases = existing?.aliases ?? [];
   const [files, setFiles] = useState<File[]>([]);
+  const [tables, setTables] = useState<TableNames[] | null>(null);
+  const [readingNames, setReadingNames] = useState(false);
+
+  // имена из таблиц опросников читаются сразу после выбора файлов
+  const tableFiles = files.filter(looksLikeTable);
+  const tablesKey = tableFiles.map((f) => `${f.name}:${f.size}:${f.lastModified}`).join("|");
+  useEffect(() => {
+    if (!tablesKey) {
+      setTables(null);
+      return;
+    }
+    let cancelled = false;
+    setReadingNames(true);
+    previewTableNames(tableFiles)
+      .then(({ tables: found }) => {
+        if (cancelled) return;
+        setTables(found);
+        const available = new Set(mergeNames(found).map((n) => nameKey(n.name)));
+        setAliases((prev) => {
+          const kept = prev.filter((a) => available.has(nameKey(a)));
+          if (kept.length || knownAliases.length) return kept;
+          // единственный человек во всех таблицах — скорее всего, это и есть пациент
+          const all = mergeNames(found);
+          return all.length === 1 ? [all[0].name] : [];
+        });
+      })
+      .catch(() => !cancelled && setTables(null))
+      .finally(() => !cancelled && setReadingNames(false));
+    return () => {
+      cancelled = true;
+    };
+    // tableFiles меняется на каждом рендере, его содержимое отражает tablesKey
+  }, [tablesKey]);
   const [conflicts, setConflicts] = useState<NameConflict[] | null>(null);
   const [choices, setChoices] = useState<Record<string, Choice>>({});
   const [checking, setChecking] = useState(false);
@@ -126,16 +164,6 @@ export function UploadModal({ initialCode, onClose }: Props) {
             allowDeselect={false}
             disabled={!!existing}
           />
-          <TextInput
-            label="Имя в опросниках"
-            description={
-              existing?.aliases.length
-                ? `уже известно: ${existing.aliases.join(", ")}; можно добавить ещё`
-                : "Колонка «Имя» в таблицах; через запятую"
-            }
-            value={aliases}
-            onChange={(e) => setAliases(e.currentTarget.value)}
-          />
         </SimpleGrid>
 
         <Dropzone onDrop={addFiles} multiple>
@@ -187,6 +215,14 @@ export function UploadModal({ initialCode, onClose }: Props) {
           </Stack>
         )}
 
+        <AliasPicker
+          tables={tables}
+          loading={readingNames}
+          known={knownAliases}
+          selected={aliases}
+          onChange={setAliases}
+        />
+
         {conflicts && (
           <Alert color="yellow" icon={<IconAlertTriangle />} title="Файлы с такими именами уже загружены">
             <Stack gap="sm">
@@ -229,7 +265,7 @@ export function UploadModal({ initialCode, onClose }: Props) {
           <Button
             onClick={submit}
             loading={checking || upload.isPending}
-            disabled={!code.trim() || files.length === 0 || unresolved}
+            disabled={!code.trim() || files.length === 0 || unresolved || readingNames}
           >
             Загрузить
           </Button>

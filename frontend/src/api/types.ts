@@ -178,3 +178,11 @@ export interface ShaclResult {
   conforms: boolean;
   violations: { focus: string; path: string; message: string }[];
 }
+
+export interface TableNames {
+  file: string;
+  has_name_column: boolean;
+  names: { name: string; rows: number }[];
+  unnamed_rows: number;
+  error: string | null;
+}

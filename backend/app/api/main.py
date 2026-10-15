@@ -1,6 +1,7 @@
 """HTTP API поверх хранилища: пациенты, документы, измерения, приём файлов, выгрузка."""
 
 import uuid
+import zipfile
 from datetime import date
 from typing import Annotated
 
@@ -17,6 +18,7 @@ from ..db import get_session
 from ..documents import EditError, edit_document
 from ..files import FileActionError, delete_file, list_files, restore_file, retract_file
 from ..ingest.pipeline import IncomingFile, IngestError, find_name_conflicts, ingest_files
+from ..ingest.questionnaires import table_names
 from ..models import Document, Fact, Fragment, IngestionRun, Patient, VocabularyEntry
 from ..rdf.export import export_patient, validate_graph
 
@@ -232,13 +234,40 @@ def check_files(code: str, body: FilesCheck, session: SessionDep) -> dict:
     return {"conflicts": find_name_conflicts(session, code, [(f.name, f.sha256) for f in body.files])}
 
 
+@app.post("/api/tables/names")
+async def table_names_preview(
+    files: Annotated[list[UploadFile], File(description="файлы для загрузки; учитываются только таблицы опросников")],
+) -> dict:
+    """Перед загрузкой: имена из колонки имени в таблицах, чтобы выбрать пациента, не открывая таблицу."""
+    content = get_content()
+    result = []
+    for f in files:
+        name = f.filename or "без_имени"
+        rule = content.match_file(name)
+        if rule is None or rule.splitter != "table":
+            continue
+        entry = {"file": name, "has_name_column": False, "names": [], "unnamed_rows": 0, "error": None}
+        try:
+            found = table_names(name, await f.read(), content)
+        except (ValueError, OSError, KeyError, zipfile.BadZipFile) as e:  # битая таблица — только предупреждение
+            entry["error"] = f"не удалось прочитать таблицу: {e}"
+        else:
+            entry |= {
+                "has_name_column": found.has_name_column,
+                "names": [{"name": n, "rows": c} for n, c in found.names],
+                "unnamed_rows": found.unnamed_rows,
+            }
+        result.append(entry)
+    return {"tables": result}
+
+
 @app.post("/api/patients/{code}/files")
 async def upload_files(
     code: str,
     session: SessionDep,
     files: Annotated[list[UploadFile], File(description="файлы пациента")],
     data_class: Annotated[str, Form()] = settings.default_data_class,
-    aliases: Annotated[str, Form(description="имена пациента в опросниках через запятую")] = "",
+    aliases: Annotated[list[str], Form(description="имена пациента в опросниках, по одному в поле")] = [],
     separate: Annotated[list[str], Form(description="файлы, которые сохранить отдельно при совпадении имени")] = [],
 ) -> dict:
     incoming = [IncomingFile(f.filename or "без_имени", await f.read()) for f in files]
@@ -248,7 +277,7 @@ async def upload_files(
             code,
             incoming,
             data_class=data_class,
-            aliases=[a.strip() for a in aliases.split(",") if a.strip()],
+            aliases=[a.strip() for a in aliases if a.strip()],
             agent="api",
             content=get_content(),
             separate=set(separate),

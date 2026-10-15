@@ -12,6 +12,7 @@ import type {
   Patient,
   ShaclResult,
   SourceFileRow,
+  TableNames,
   UploadResult,
   VocabularyEntry,
 } from "./types";
@@ -80,18 +81,25 @@ export function useUpdateDocument() {
   });
 }
 
-export const checkFiles = (code: string, files: { name: string; sha256: string }[]) =>
+/** Имена из колонки имени в таблицах опросников — до загрузки, чтобы выбрать пациента. */
+export const previewTableNames = (files: File[]) => {
+  const form = new FormData();
+  files.forEach((f) => form.append("files", f));
+  return http.postForm<{ tables: TableNames[] }>("/api/tables/names", form);
+};
+
+export const checkFiles =(code: string, files: { name: string; sha256: string }[]) =>
   http.post<{ conflicts: NameConflict[] }>(`/api/patients/${enc(code)}/files/check`, { files });
 
 export function useUploadFiles() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (args: { code: string; files: File[]; dataClass: string; aliases: string; separate: string[] }) => {
+    mutationFn: (args: { code: string; files: File[]; dataClass: string; aliases: string[]; separate: string[] }) => {
       const form = new FormData();
       args.files.forEach((f) => form.append("files", f));
       args.separate.forEach((name) => form.append("separate", name));
       form.append("data_class", args.dataClass);
-      form.append("aliases", args.aliases);
+      args.aliases.forEach((name) => form.append("aliases", name));
       return http.postForm<UploadResult>(`/api/patients/${enc(args.code)}/files`, form);
     },
     onSuccess: () => {

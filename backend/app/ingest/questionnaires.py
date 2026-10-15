@@ -101,6 +101,41 @@ def read_table(file_name: str, data: bytes) -> pd.DataFrame:
     return df.dropna(how="all")
 
 
+def _alias_column(headers: list[str], content: Content) -> int | None:
+    for col, header in enumerate(headers):
+        role = content.column_roles.get(normalize(header))
+        if role and role.role == "patient_alias":
+            return col
+    return None
+
+
+@dataclass
+class TableNames:
+    has_name_column: bool
+    names: list[tuple[str, int]]  # (имя, сколько строк) в порядке первого появления
+    unnamed_rows: int
+
+
+def table_names(file_name: str, data: bytes, content: Content) -> TableNames:
+    """Имена из колонки имени — чтобы выбрать пациента до загрузки, не открывая таблицу."""
+    df = read_table(file_name, data)
+    col = _alias_column([str(c).strip() for c in df.columns], content)
+    if col is None:
+        return TableNames(False, [], len(df))
+    counts: dict[str, int] = {}
+    shown: dict[str, str] = {}
+    unnamed = 0
+    for value in df.iloc[:, col]:
+        if _is_blank(value):
+            unnamed += 1
+            continue
+        name = _display(value)
+        key = normalize(name)
+        shown.setdefault(key, name)
+        counts[key] = counts.get(key, 0) + 1
+    return TableNames(True, [(shown[k], n) for k, n in counts.items()], unnamed)
+
+
 def parse_table(file_name: str, data: bytes, content: Content, aliases: list[str]) -> ParsedTable:
     df = read_table(file_name, data)
     headers = [str(c).strip() for c in df.columns]

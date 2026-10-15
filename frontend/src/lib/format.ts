@@ -34,3 +34,22 @@ export async function sha256(file: File): Promise<string> {
 
 /** Замечание о дате, которое снимается вводом даты вручную. */
 export const DATE_NOTE_CODES = new Set(["missing_date", "date_from_header", "invalid_header_date"]);
+
+/** Ключ сравнения имён — как normalize() на сервере: без учёта регистра, ё/е, кавычек и пробелов. */
+export const nameKey = (text: string) =>
+  text
+    .normalize("NFKC")
+    .toLowerCase()
+    .replace(/ё/g, "е")
+    .replace(/_/g, " ")
+    .replace(/[«»]/g, '"')
+    .replace(/\s+/g, " ")
+    .trim();
+
+/** «1 строка», «3 строки», «5 строк». */
+export function plural(n: number, one: string, few: string, many: string): string {
+  const d10 = n % 10;
+  const d100 = n % 100;
+  const word = d10 === 1 && d100 !== 11 ? one : d10 >= 2 && d10 <= 4 && (d100 < 12 || d100 > 14) ? few : many;
+  return `${n} ${word}`;
+}

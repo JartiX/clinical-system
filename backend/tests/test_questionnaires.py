@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from app.ingest.questionnaires import parse_table
+from app.ingest.questionnaires import parse_table, table_names
 
 from .conftest import make_form_xlsx, scale_labels
 
@@ -75,3 +75,19 @@ def test_instrument_without_key_keeps_answers(content):
                       content, aliases=[]).responses[0].instruments[code]
     assert res.total is None and res.complete
     assert any("ключ" in i for i in res.issues)
+
+
+def test_table_names_counts_rows_per_person(content):
+    a, _ = _two_instrument_codes(content)
+    labels = scale_labels(content, a)
+    answers = {(a, n): labels[0] for n in content.instruments[a].items}
+    rows = [
+        {"ts": 46000.0, "name": "Пётр", "answers": answers},
+        {"ts": 46001.0, "name": "Другой", "answers": answers},
+        {"ts": 46002.0, "name": " петр ", "answers": answers},  # то же имя: регистр, ё/е и пробелы не важны
+        {"ts": 46003.0, "name": None, "answers": answers},
+    ]
+    found = table_names("форма.xlsx", make_form_xlsx(content, rows, [a]), content)
+    assert found.has_name_column
+    assert found.names == [("Пётр", 2), ("Другой", 1)]
+    assert found.unnamed_rows == 1
