@@ -1,0 +1,24 @@
+.text {
+  font-size: var(--mantine-font-size-sm);
+  line-height: 1.5;
+}
+
+.fragment {
+  white-space: pre-wrap;
+  padding: 2px 8px;
+  border-radius: var(--mantine-radius-sm);
+  border-left: 2px solid transparent;
+}
+
+.fragment[data-kind="header"] {
+  font-weight: 600;
+}
+
+.fragment[data-kind="table_row"] {
+  margin-bottom: var(--mantine-spacing-xs);
+}
+
+.fragment[data-hover] {
+  background: var(--mantine-primary-color-light);
+  border-left-color: var(--mantine-primary-color-filled);
+}
