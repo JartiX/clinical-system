@@ -20,7 +20,14 @@ from ..ingest.pipeline import IncomingFile, IngestError, find_name_conflicts, in
 from ..models import Document, Fact, Fragment, IngestionRun, Patient, VocabularyEntry
 from ..rdf.export import export_patient, validate_graph
 
-app = FastAPI(title="Система поддержки клинического рассуждения", version="0.1.0")
+# документация под /api, чтобы открываться через прокси веб-интерфейса
+app = FastAPI(
+    title="Система поддержки клинического рассуждения",
+    version="0.1.0",
+    docs_url="/api/docs",
+    redoc_url=None,
+    openapi_url="/api/openapi.json",
+)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173"],

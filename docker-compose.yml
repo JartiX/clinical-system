@@ -1,15 +1,21 @@
+# Наружу (на 127.0.0.1 хоста) открыт только веб-интерфейс; на сервере его отдаёт
+# nginx хоста (пример в deploy/nginx-host.conf). API доступен только через веб по /api.
+# База слушает 127.0.0.1 — для локальной разработки и тестов, из сети она недоступна.
+
 services:
   db:
+    restart: unless-stopped
     image: postgres:16
     environment:
       POSTGRES_USER: clinical
-      POSTGRES_PASSWORD: clinical
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-clinical}
       POSTGRES_DB: clinical
     ports:
-      - "${DB_PORT:-55440}:5432"
+      - "127.0.0.1:${DB_PORT:-55440}:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./backend/scripts/init-test-db.sql:/docker-entrypoint-initdb.d/init-test-db.sql:ro
+    networks: [backend]
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U clinical -d clinical"]
       interval: 2s
@@ -17,14 +23,14 @@ services:
       retries: 30
 
   api:
+    restart: unless-stopped
     build: ./backend
     environment:
-      DATABASE_URL: postgresql+psycopg://clinical:clinical@db:5432/clinical
+      DATABASE_URL: postgresql+psycopg://clinical:${POSTGRES_PASSWORD:-clinical}@db:5432/clinical
       CONTENT_DIR: /content
     volumes:
       - ./content:/content:ro
-    ports:
-      - "8000:8000"
+    networks: [backend, frontend]
     depends_on:
       db:
         condition: service_healthy
@@ -34,11 +40,18 @@ services:
              uvicorn app.api.main:app --host 0.0.0.0 --port 8000"
 
   web:
+    restart: unless-stopped
     build: ./frontend
     ports:
-      - "5173:80"
+      - "127.0.0.1:${WEB_PORT:-5173}:80"
+    networks: [frontend]
     depends_on:
       - api
+
+# веб не видит базу: он только в frontend, база только в backend
+networks:
+  backend:
+  frontend:
 
 volumes:
   pgdata:
