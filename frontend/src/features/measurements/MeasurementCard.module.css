@@ -1,0 +1,43 @@
+.items {
+  border-top: 1px solid var(--mantine-color-default-border);
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 2rem minmax(0, 1fr) minmax(7rem, 11rem) 2rem;
+  gap: 4px var(--mantine-spacing-sm);
+  align-items: baseline;
+  padding: 6px 4px;
+  border-bottom: 1px solid var(--mantine-color-default-border);
+}
+
+.score {
+  text-align: right;
+}
+
+/* на узком экране: номер и формулировка в первой строке, ответ и балл — во второй */
+@media (max-width: $mantine-breakpoint-sm) {
+  .row {
+    grid-template-columns: 2rem minmax(0, 1fr) auto;
+    grid-template-areas:
+      "no question question"
+      ". answer score";
+  }
+
+  .no {
+    grid-area: no;
+  }
+
+  .question {
+    grid-area: question;
+  }
+
+  .answer {
+    grid-area: answer;
+    color: var(--mantine-color-dimmed);
+  }
+
+  .score {
+    grid-area: score;
+  }
+}
