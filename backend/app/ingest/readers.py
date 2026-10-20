@@ -1,6 +1,7 @@
-"""Байты файла -> текст. TXT сами, DOCX сами или через Tika, PDF через Tika."""
+"""Байты файла -> текст. TXT и MD сами, DOCX сами или через Tika, PDF через Tika."""
 
 import io
+import re
 import zipfile
 from pathlib import Path
 from xml.etree import ElementTree as ET
@@ -11,11 +12,15 @@ from ..config import settings
 
 MEDIA_TYPES = {
     ".txt": "text/plain",
+    ".md": "text/markdown",
     ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     ".pdf": "application/pdf",
     ".xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     ".csv": "text/csv",
 }
+
+# Экранирование Markdown: «2011\.» в выгрузке Google Docs означает «2011.»
+_MD_ESCAPE = re.compile(r"\\([\\`*_{}\[\]()#+\-.!<>|~])")
 
 _W = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
 
@@ -72,6 +77,8 @@ def read_document_text(file_name: str, data: bytes) -> str:
     ext = Path(file_name).suffix.lower()
     if ext in (".txt", ""):
         return decode_text(data)
+    if ext == ".md":
+        return _MD_ESCAPE.sub(r"\1", decode_text(data))
     if settings.tika_url and ext in (".docx", ".pdf", ".doc", ".rtf"):
         return _tika_text(data)
     if ext == ".docx":

@@ -37,6 +37,12 @@ document_type,emergency_visit,Приёмный покой,
 document_type,discharge_summary,Выписка,
 document_type,interview_transcript,Беседа,
 document_type,questionnaire,Опросник,
+document_type,informant_interview,Беседа с родственником,Сведения сообщены родственником или другим информантом
+document_type,informant_record,Записи родственника,"Дневник наблюдений, который вёл родственник"
+document_type,progress_note,Дневниковая запись,Запись лечащего врача в стационаре
+document_type,stage_epicrisis,Этапный эпикриз,
+document_type,administrative_record,Служебная запись,"Поступление, перевод, смена койки или врача"
+document_type,instrumental_study,Инструментальное исследование,"ЭКГ, УЗИ, ЭЭГ и т. п."
 document_type,unknown,Не определён,Требует ручной разметки
 specialty,psychiatrist,Психиатр,
 specialty,gynecologist,Гинеколог,

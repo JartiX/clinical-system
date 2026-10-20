@@ -6,6 +6,7 @@ instrument_items.csv, служебные колонки из table_columns.csv. 
 текстовые подписи, баллы берутся из answer_scales.csv.
 """
 
+import csv
 import io
 import math
 from dataclasses import dataclass, field
@@ -93,9 +94,29 @@ def _display(value) -> str:
     return str(value).strip()
 
 
+class TableError(ValueError):
+    pass
+
+
+def _read_csv(data: bytes) -> pd.DataFrame:
+    """Строки выгрузки бывают длиннее заголовка за счёт пустых полей в конце: их
+    отбрасываем. Иначе pandas сделал бы лишние поля индексом и сдвинул колонки."""
+    rows = list(csv.reader(io.StringIO(data.decode("utf-8-sig"), newline="")))
+    if not rows:
+        return pd.DataFrame()
+    header, body = rows[0], []
+    for line_no, row in enumerate(rows[1:], start=2):
+        extra = row[len(header):]
+        if any(v.strip() for v in extra):
+            raise TableError(f"строка {line_no}: значений больше, чем колонок в заголовке")
+        row = row[: len(header)] + [""] * (len(header) - len(row))
+        body.append([v if v.strip() else None for v in row])
+    return pd.DataFrame(body, columns=header, dtype=object)
+
+
 def read_table(file_name: str, data: bytes) -> pd.DataFrame:
     if Path(file_name).suffix.lower() == ".csv":
-        df = pd.read_csv(io.BytesIO(data), dtype=object, encoding="utf-8-sig")
+        df = _read_csv(data)
     else:
         df = pd.read_excel(io.BytesIO(data), dtype=object)
     return df.dropna(how="all")

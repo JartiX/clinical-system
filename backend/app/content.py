@@ -15,6 +15,7 @@ from pathlib import Path
 from .config import settings
 
 SPLITTERS = {"dated_headers", "lines", "paragraphs", "table"}
+RULE_MATCH = {"name", "text"}
 SCORINGS = {"sum"}
 COLUMN_ROLES = {"timestamp", "patient_alias", "stated_total", "extra"}
 
@@ -44,6 +45,8 @@ class FileRule:
     doc_type: str | None
     specialty: str | None
     splitter: str
+    # где искать образец: в имени файла или в первых строках текста
+    match: str = "name"
 
 
 @dataclass(frozen=True)
@@ -51,6 +54,8 @@ class HeaderRule:
     pattern: re.Pattern
     doc_type: str
     specialty: str | None
+    # название документа вместо строки-заголовка (section_rules, колонка title)
+    title: str | None = None
 
 
 @dataclass
@@ -75,6 +80,8 @@ class Content:
     vocabulary: list[VocabularyRow]
     file_rules: list[FileRule]
     header_rules: list[HeaderRule]
+    # строки, с которых начинается документ внутри сводного файла без строк визита
+    section_rules: list[HeaderRule]
     instruments: dict[str, Instrument]
     # шкала -> нормализованная подпись -> (подпись, балл или None, если ключ не задан)
     answer_scales: dict[str, dict[str, tuple[str, int | None]]]
@@ -94,11 +101,23 @@ class Content:
 
     def match_file(self, file_name: str) -> FileRule | None:
         name = normalize(file_name)
-        return next((r for r in self.file_rules if r.pattern.search(name)), None)
+        return next((r for r in self.file_rules if r.match == "name" and r.pattern.search(name)), None)
+
+    def match_text(self, text: str, lines: int = 5) -> FileRule | None:
+        """Правило по началу текста: первые непустые строки, каждая отдельно."""
+        head = [normalize(s) for s in text.split("\n") if s.strip()][:lines]
+        return next(
+            (r for r in self.file_rules if r.match == "text" and any(r.pattern.search(s) for s in head)),
+            None,
+        )
 
     def match_header(self, label: str) -> HeaderRule | None:
         key = normalize(label)
         return next((r for r in self.header_rules if r.pattern.search(key)), None)
+
+    def match_section(self, line: str) -> HeaderRule | None:
+        key = normalize(line)
+        return next((r for r in self.section_rules if r.pattern.search(key)), None) if key else None
 
 
 def _rows(path: Path, required: list[str]):
@@ -144,25 +163,35 @@ def load_content(content_dir: Path | None = None) -> Content:
         where = f"file_rules.csv:{ln}"
         if r["splitter"] not in SPLITTERS:
             raise ContentError(f"{where}: splitter '{r['splitter']}' не из {sorted(SPLITTERS)}")
+        match = r.get("match") or "name"
+        if match not in RULE_MATCH:
+            raise ContentError(f"{where}: match '{match}' не из {sorted(RULE_MATCH)}")
         file_rules.append(
             FileRule(
                 _regex(r["pattern"], where),
                 check_code(r["doc_type"], doc_types, "doc_type", where),
                 check_code(r["specialty"], specialties, "specialty", where),
                 r["splitter"],
+                match,
             )
         )
 
-    header_rules = []
-    for ln, r in _rows(d / "header_rules.csv", ["pattern", "doc_type", "specialty"]):
-        where = f"header_rules.csv:{ln}"
-        header_rules.append(
-            HeaderRule(
-                _regex(r["pattern"], where),
-                check_code(r["doc_type"], doc_types, "doc_type", where) or "unknown",
-                check_code(r["specialty"], specialties, "specialty", where),
+    def label_rules(file_name: str) -> list[HeaderRule]:
+        rules = []
+        for ln, r in _rows(d / file_name, ["pattern", "doc_type", "specialty"]):
+            where = f"{file_name}:{ln}"
+            rules.append(
+                HeaderRule(
+                    _regex(r["pattern"], where),
+                    check_code(r["doc_type"], doc_types, "doc_type", where) or "unknown",
+                    check_code(r["specialty"], specialties, "specialty", where),
+                    r.get("title") or None,
+                )
             )
-        )
+        return rules
+
+    header_rules = label_rules("header_rules.csv")
+    section_rules = label_rules("section_rules.csv")
 
     answer_scales: dict[str, dict[str, tuple[str, int | None]]] = {}
     for ln, r in _rows(d / "answer_scales.csv", ["scale", "label", "score"]):
@@ -223,6 +252,7 @@ def load_content(content_dir: Path | None = None) -> Content:
         vocabulary=vocabulary,
         file_rules=file_rules,
         header_rules=header_rules,
+        section_rules=section_rules,
         instruments=instruments,
         answer_scales=answer_scales,
         column_roles=column_roles,
