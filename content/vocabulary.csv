@@ -1,0 +1,53 @@
+kind,code,label,description
+data_class,synthetic,Синтетические,Написаны психиатрами для разработки и приёмки
+data_class,deidentified,Обезличенные,Реальные записи после обезличивания
+data_class,personal,Персональные,Только локальная обработка и локальная модель
+epistemic_status,measured,Измерено,
+epistemic_status,patient_reported,Сказано пациентом,
+epistemic_status,clinician_assessed,Оценено врачом,
+epistemic_status,model_extracted,Извлечено моделью,
+epistemic_status,rule_derived,Выведено правилом,
+epistemic_status,model_suggested,Предложено моделью,
+epistemic_status,kg_derived,Выведено из графа знаний,
+confirmation_status,unconfirmed,Не подтверждено,
+confirmation_status,confirmed,Подтверждено,
+confirmation_status,corrected,Исправлено,
+confirmation_status,rejected,Отклонено,
+date_precision,day,День,
+date_precision,month,Месяц,
+date_precision,year,Год,
+date_precision,approximate,Приблизительно,
+date_precision,unknown,Неизвестно,
+fact_type,diagnosis,Диагноз,
+fact_type,symptom,Симптом,
+fact_type,medication,Назначение,
+fact_type,drug_course,Курс препарата,
+fact_type,measurement,Измерение,"Шкала, анализ, антропометрия"
+fact_type,event,Событие,
+fact_type,patient_statement,Утверждение пациента,
+fragment_kind,header,Заголовок,
+fragment_kind,paragraph,Абзац,
+fragment_kind,line,Строка беседы,
+fragment_kind,table_row,Строка таблицы,
+document_type,psychiatric_exam,Осмотр психиатра,
+document_type,specialist_consultation,Консультация специалиста,
+document_type,day_hospital,Дневной стационар,
+document_type,referral,Направление,
+document_type,emergency_visit,Приёмный покой,
+document_type,discharge_summary,Выписка,
+document_type,interview_transcript,Беседа,
+document_type,questionnaire,Опросник,
+document_type,informant_interview,Беседа с родственником,Сведения сообщены родственником или другим информантом
+document_type,informant_record,Записи родственника,"Дневник наблюдений, который вёл родственник"
+document_type,progress_note,Дневниковая запись,Запись лечащего врача в стационаре
+document_type,stage_epicrisis,Этапный эпикриз,
+document_type,administrative_record,Служебная запись,"Поступление, перевод, смена койки или врача"
+document_type,instrumental_study,Инструментальное исследование,"ЭКГ, УЗИ, ЭЭГ и т. п."
+document_type,unknown,Не определён,Требует ручной разметки
+specialty,psychiatrist,Психиатр,
+specialty,gynecologist,Гинеколог,
+specialty,neurologist,Невролог,
+specialty,rheumatologist,Ревматолог,
+specialty,urologist,Уролог,
+specialty,vascular_surgeon,Сосудистый хирург,
+specialty,endocrinologist,Эндокринолог,

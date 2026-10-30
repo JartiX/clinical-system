@@ -1,0 +1,9 @@
+pattern,doc_type,specialty,splitter,match,note
+саммари|выписк,,,dated_headers,name,Много визитов в одном файле; вид и автор — из строки визита
+(транскрипт|интервью|беседа).*(матер|отц|отеч|родител|родствен|супруг|сестр|брат),informant_interview,,lines,name,"Беседа с родственником: сведения сообщены не пациентом"
+транскрипт|интервью|беседа,interview_transcript,,lines,name,Беседа — один источник; сведения по умолчанию сообщены пациентом
+первичн.*при[её]м|осмотр психиатра,psychiatric_exam,psychiatrist,paragraphs,name,
+консультац,specialist_consultation,,paragraphs,name,"Консультации смежных специалистов; специальность по тексту"
+\.(xlsx|csv)$,questionnaire,,table,name,
+выписной.*эпикриз|^выписка из,discharge_summary,,dated_headers,text,"Выгрузка медкарты: записи «ДД.ММ.ГГГГ ЧЧ:ММ : Дневник», шапка — титульная часть выписки"
+первичный осмотр,psychiatric_exam,psychiatrist,paragraphs,text,Файл без говорящего имени: вид по первым строкам

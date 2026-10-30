@@ -1,0 +1,21 @@
+pattern,doc_type,specialty,note
+^гинеколог$,specialist_consultation,gynecologist,
+^невролог$,specialist_consultation,neurologist,
+^ревматолог$,specialist_consultation,rheumatologist,
+^уролог$,specialist_consultation,urologist,
+^сосудистый хирург$,specialist_consultation,vascular_surgeon,
+^эндокринолог$,specialist_consultation,endocrinologist,
+^психиатр$,psychiatric_exam,psychiatrist,
+^дневной стац,day_hospital,,
+^направление,referral,,
+^приемный покой уролог$,emergency_visit,urologist,
+^приемный покой$,emergency_visit,,
+^дневник,progress_note,psychiatrist,"Выгрузка медкарты: «Дневник», «Дневник при выписке», «Дневник для записей»"
+^первичный осмотр,psychiatric_exam,psychiatrist,
+^совместный осмотр,psychiatric_exam,psychiatrist,Осмотр с заведующим или экспертом
+^обоснование диагноза,psychiatric_exam,psychiatrist,
+^этапный эпикриз,stage_epicrisis,psychiatrist,
+^выписной эпикриз,discharge_summary,psychiatrist,
+^консультация,specialist_consultation,,Специальность указана в тексте записи
+^регистрация в приемном|^поступил на отделение|^смена койки|^смена врача|^перевод,administrative_record,,
+электрокардиограф|ультразвуков|электроэнцефалограф|рентген|томограф,instrumental_study,,

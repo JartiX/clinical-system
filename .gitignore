@@ -1,0 +1,28 @@
+# Данные пациентов (реальные или обезличенные) никогда не попадают в репозиторий
+sample/
+data/
+*.zip
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+*.egg-info/
+.ruff_cache/
+
+# Node
+node_modules/
+dist/
+.vite/
+
+# Окружение и редакторы
+.env
+.vscode/
+.idea/
+*.tsbuildinfo
+
+# Техническое задание
+docs/*.docx
+/docs
